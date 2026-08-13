@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16    
+    ports:
+      - "5431:5432"
+    container_name: my_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_DB: mydatabase
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    driver: local
