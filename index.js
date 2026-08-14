@@ -2,6 +2,10 @@ import {db} from './db/index.js';
 import {todosTable} from './db/schema.js';
 import { ilike, eq } from 'drizzle-orm';
 import OpenAI from "openai";
+import dotenv from "dotenv";
+import readlinesync from "readline-sync";
+
+dotenv.config();
 
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -23,7 +27,11 @@ async function searchTodos(search){
 }
 
 async function deleteTodo(id){
-    const [deletedTodo] = await db.delete(todosTable).where(todosTable.id.eq(id)).returning({id: todosTable.id});
+    const [deletedTodo] = await db
+        .delete(todosTable)
+        .where(eq(todosTable.id, id))
+        .returning({ id: todosTable.id });
+
     return deletedTodo;
 }
 
@@ -65,3 +73,36 @@ START
 `
 
 const messages = [{role: "system", content: SystemPrompt}];
+
+while(true){
+    const userInput = readlinesync.question("User: ");
+    const userMessage = {type: "user", user: userInput};
+    messages.push({role: "user", content: JSON.stringify(userMessage)}); 
+    while(true){
+    const chat = await client.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: messages,
+        response_format: {
+            type: "json_object",}
+        });
+        const result = chat.choices[0].message.content;
+        messages.push({role: "assistant", content: result});
+        console.log("Start AI");
+        console.log("AI Response: ", result);
+        console.log("End AI");
+        const action = JSON.parse(result);
+
+        if(action.type === "output"){
+            console.log("AI Output: ", action.output);
+            break;
+        }else if(action.type === "action"){
+            const fns = tools[action.function];
+            if(!fns){
+                console.log("invalid tool call");  
+            }
+            const observation = await fns(action.input);
+            const observationMessage = {type: "observation", observation: observation};
+            messages.push({role: "developer", content: JSON.stringify(observationMessage)});
+        }
+    }
+}
