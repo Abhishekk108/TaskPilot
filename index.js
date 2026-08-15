@@ -36,11 +36,27 @@ async function deleteTodo(id){
 }
 
 const tools = {
-    getAllTodos : getAllTodos,
-    createTodo : createTodo,
-    searchTodos : searchTodos,
-    deleteTodo : deleteTodo
-}
+    getAllTodos: {
+        fn: getAllTodos,
+        description: "Get all todos",
+        inputType: "none"
+    },
+    createTodo: {
+        fn: createTodo,
+        description: "Create a todo",
+        inputType: "string"
+    },
+    searchTodos: {
+        fn: searchTodos,
+        description: "Search todos",
+        inputType: "string"
+    },
+    deleteTodo: {
+        fn: deleteTodo,
+        description: "Delete a todo by ID",
+        inputType: "integer"
+    }
+};
 const SystemPrompt = `You are a helpful AI todo assistant with start , plan , action ,observation and output state.
 Wait for the user prompt and first plan using the available tools .
 After planning take the action with appropriate tools and wait for observations based on action .
