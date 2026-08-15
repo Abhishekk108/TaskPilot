@@ -70,6 +70,30 @@ Todo  db Schema:
 - created_at: date, time 
 - updated_at: date, time
 
+You must return exactly one of these JSON formats:
+For planning:
+{
+  "type": "plan",
+  "plan": "..."
+}
+
+For tool execution:
+{
+  "type": "action",
+  "function": "tool_name",
+  "input": "..."
+}
+
+For final response:
+{
+  "type": "output",
+  "output": "..."
+}
+
+getAllTodos → no input
+createTodo → string input
+searchTodos → string input
+deleteTodo → integer input
 
 Available tools:
 - getAllTodos: Fetch all todos from the database.
@@ -107,7 +131,13 @@ while(true){
         console.log("Start AI");
         console.log("AI Response: ", result);
         console.log("End AI");
-        const action = JSON.parse(result);
+        let action;
+        try {
+            action = JSON.parse(result);
+        } catch (error) {
+            console.log("Invalid JSON from AI:", result);
+            break;
+        }
 
         if(action.type === "output"){
             console.log("AI Output: ", action.output);
