@@ -34,7 +34,18 @@ async function deleteTodo(id){
 
     return deletedTodo;
 }
+async function updateTodo({ id, todo }) {
+    const [updatedTodo] = await db
+        .update(todosTable)
+        .set({
+            todo,
+            updatedAt: new Date()
+        })
+        .where(eq(todosTable.id, id))
+        .returning();
 
+    return updatedTodo;
+}
 const tools = {
     getAllTodos: {
         fn: getAllTodos,
@@ -55,6 +66,11 @@ const tools = {
         fn: deleteTodo,
         description: "Delete a todo by ID",
         inputType: "integer"
+    },
+    updateTodo: {
+        fn: updateTodo,
+        description: "Update a todo by ID",
+        inputType: "object"
     }
 };
 const SystemPrompt = `You are a helpful AI todo assistant with start , plan , action ,observation and output state.
@@ -94,13 +110,19 @@ getAllTodos → no input
 createTodo → string input
 searchTodos → string input
 deleteTodo → integer input
-
+updateTodo → object input:
+{
+  "id": integer,
+  "todo": string
+}
 Available tools:
 - getAllTodos: Fetch all todos from the database.
 - createTodo: Add a new todo to the database. Accepts a string parameter for the todo text. and returns the ID of the newly created todo. 
 - searchTodos: Search for todos in the database that match a given string. Accepts a string parameter for the search query. 
 - deleteTodo: Delete a todo from the database by its ID.For deleting a todo, first search for the todo to find its ID. Then use deleteTodo with that ID.
-If multiple matching todos are found, ask the user which one they want to delete.
+- updateTodo: Update a todo in the database by its ID. Accepts an object parameter with the updated todo text.
+If multiple matching todos are found when deleting or updating,
+ask the user which todo they mean before performing the action.
 Example:
 START
 { "type": "user", "user": "Add a task for shopping groceries." }
@@ -111,7 +133,39 @@ START
 { "type": "action", "function": "createTodo", "input": "Shopping for milk, kurkure, lays and choco." }
 { "type": "observation", "observation": "2" }
 { "type": "output", "output": "You todo has been added successfully" }
+
+Example:
+User: Change my "study Java" task to "study Java for 2 hours."
+
+Plan:
+Find the todo using searchTodos, then update it.
+
+Action:
+{
+  "type": "action",
+  "function": "searchTodos",
+  "input": "study Java"
+}
+
+Observation:
+[
+  {
+    "id": 3,
+    "todo": "study Java"
+  }
+]
+
+Action:
+{
+  "type": "action",
+  "function": "updateTodo",
+  "input": {
+    "id": 3,
+    "todo": "study Java for 2 hours."
+  }
+}
 `
+
 
 const messages = [{role: "system", content: SystemPrompt}];
 
@@ -142,13 +196,16 @@ while(true){
         if(action.type === "output"){
             console.log("AI Output: ", action.output);
             break;
-        }else if(action.type === "action"){
-            const fns = tools[action.function];
-            if(!fns){
-                console.log("invalid tool call");  
+        }
+        else if(action.type === "action"){
+            const tool = tools[action.function];
+            if (!tool) {
+                console.log("Invalid tool call:", action.function);
                 break;
             }
-            const observation = await fns(action.input);
+            const observation = tool.inputType === "none"
+                ? await tool.fn()
+                : await tool.fn(action.input);
             const observationMessage = {type: "observation", observation: observation};
             messages.push({role: "user", content: JSON.stringify(observationMessage)});
         }
