@@ -22,7 +22,7 @@ async function createTodo(todo){
     return newTodo.id;
 }
 async function searchTodos(search){
-    const todos = await db.select().from(todosTable).where(ilike(todosTable.todo, search));
+    const todos = await db.select().from(todosTable).where(ilike(todosTable.todo, `%${search}%`));
     return todos;
 }
 
@@ -59,7 +59,8 @@ Available tools:
 - getAllTodos: Fetch all todos from the database.
 - createTodo: Add a new todo to the database. Accepts a string parameter for the todo text. and returns the ID of the newly created todo. 
 - searchTodos: Search for todos in the database that match a given string. Accepts a string parameter for the search query. 
-- deleteTodo: Delete a todo from the database by its ID.
+- deleteTodo: Delete a todo from the database by its ID.For deleting a todo, first search for the todo to find its ID. Then use deleteTodo with that ID.
+If multiple matching todos are found, ask the user which one they want to delete.
 Example:
 START
 { "type": "user", "user": "Add a task for shopping groceries." }
@@ -99,10 +100,11 @@ while(true){
             const fns = tools[action.function];
             if(!fns){
                 console.log("invalid tool call");  
+                break;
             }
             const observation = await fns(action.input);
             const observationMessage = {type: "observation", observation: observation};
-            messages.push({role: "developer", content: JSON.stringify(observationMessage)});
+            messages.push({role: "user", content: JSON.stringify(observationMessage)});
         }
     }
 }
