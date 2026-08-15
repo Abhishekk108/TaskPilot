@@ -1,10 +1,10 @@
-# TodoAgent
+# taskpilot
 
-A CLI-based todo management application powered by AI, built with Node.js and PostgreSQL.
+TaskPilot is a CLI-based AI Todo Agent built with Node.js, Groq, PostgreSQL, and Drizzle ORM. 
 
 ## Overview
 
-TodoAgent provides intelligent todo management with AI capabilities integrated through the Groq API. Manage tasks with natural language processing and database persistence.
+TaskPilot provides intelligent todo management with AI capabilities integrated through the Groq API. Manage tasks with natural language processing and database persistence.
 
 ## Features
 
@@ -26,7 +26,7 @@ TodoAgent provides intelligent todo management with AI capabilities integrated t
 
 ```bash
 git clone <repository-url>
-cd TodoAgent
+cd taskpilot
 ```
 
 2. Install dependencies:
