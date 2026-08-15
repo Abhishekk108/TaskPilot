@@ -1,4 +1,4 @@
-# taskpilot
+# Taskpilot
 
 TaskPilot is a CLI-based AI Todo Agent built with Node.js, Groq, PostgreSQL, and Drizzle ORM. 
 
